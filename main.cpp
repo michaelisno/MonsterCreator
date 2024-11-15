@@ -17,7 +17,7 @@ void InitMonster(Monster& monster)
 	int health;
 	string name;
 
-	cout << "Enter Monster's Health: ";
+	cout << "Enter Monsters Health: ";
 	cin >> health;
 	cout << "Enter Monster's Name: ";
 	cin >> name;
