@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -10,6 +12,8 @@ struct Monster
 {
 	string monsterName = "";
 	int monsterHealth;
+	int monsterMaxHealth;
+	int monsterRegenRate;
 	int monsterLevel;
 };
 
@@ -17,6 +21,7 @@ void InitMonster(Monster& monster)
 {
 	int health;
 	int level;
+	int regenRate;
 	string name;
 
 	cout << "Enter Monsters Name: ";
@@ -25,12 +30,16 @@ void InitMonster(Monster& monster)
 	cin >> health;
 	cout << "Enter Monsters Level: ";
 	cin >> level;
-	
+	cout << "Enter Monsters Regen Rate (per second): ";
+	cin >> regenRate;
+
 	cout << endl << "Monster: " << name << " has been created." << endl << "--------------------------" << endl;
 
 	monster.monsterName = name;
 	monster.monsterHealth = health;
+	monster.monsterMaxHealth = health;
 	monster.monsterLevel = level;
+	monster.monsterRegenRate = regenRate;
 }
 
 void DisplayMonsters(Monster monsters[])
@@ -91,10 +100,25 @@ void FightSpecificMonster(Monster& monster)
 	bool isMonsterDead = false;
 	int currentAttackCount = 0;
 
+	auto lastRegenTime = chrono::steady_clock::now();
+
 	while (!isMonsterDead)
 	{
-		cout << "Monsters Health: " << monster.monsterHealth << endl;
-		cout << "Monsters Level: " << monster.monsterLevel << endl << endl;
+		auto currentTime = chrono::steady_clock::now();
+		auto timeSinceLastRegen = chrono::duration_cast<chrono::seconds>(currentTime - lastRegenTime).count();
+		
+		if (timeSinceLastRegen > 0)
+		{
+			int regenAmount = timeSinceLastRegen * monster.monsterRegenRate;
+			monster.monsterHealth += regenAmount;
+
+			if (monster.monsterHealth > monster.monsterMaxHealth)
+				monster.monsterHealth = monster.monsterMaxHealth;
+
+			lastRegenTime += chrono::seconds(timeSinceLastRegen);
+		}
+
+		cout << "Monsters Health: " << monster.monsterHealth << endl << endl;
 		cout << "Light attack (l) or Heavy Attack (h): ";
 
 		string userInput;
@@ -122,6 +146,8 @@ void FightSpecificMonster(Monster& monster)
 
 		if (monster.monsterHealth <= 0)
 			isMonsterDead = true;
+
+		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 
 	if (isMonsterDead)
@@ -156,8 +182,8 @@ void FightMonsters(Monster monsters[], int& numMonstersCreated)
 			if (numMonstersCreated == 0)
 			{
 				cout << endl << "-----------------------------------------------" << endl;
-				cout << "Well Done! You have successfully defeated all monsters and have won the game!" << endl;
-				cout << endl << "-----------------------------------------------" << endl << endl;
+				cout << "Well Done! You have successfully defeated\nall monsters and have won the game!" << endl;
+				cout << "-----------------------------------------------" << endl << endl;
 			}
 			else
 			{
