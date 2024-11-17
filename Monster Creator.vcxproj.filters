@@ -19,4 +19,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="UserMenuOptions.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="AllMonstersDefeated.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="savedMonsters.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

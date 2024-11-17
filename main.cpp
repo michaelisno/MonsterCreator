@@ -1,10 +1,12 @@
 #include <iostream>
-#include <vector>
 #include <string>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
+using namespace chrono;
 
 const int maxMonsterCount = 5;
 
@@ -16,6 +18,84 @@ struct Monster
 	int monsterRegenRate;
 	int monsterLevel;
 };
+
+void SaveMonstersToFile(Monster monsters[], int numMonstersCreated, const string& filename)
+{
+	ofstream file(filename);
+
+	if (file.is_open())
+	{
+		for (int i = 0; i < numMonstersCreated; i++)
+		{
+			file << monsters[i].monsterName << "," << monsters[i].monsterHealth << "," << monsters[i].monsterMaxHealth 
+				<< "," << monsters[i].monsterLevel << "," << monsters[i].monsterRegenRate << endl;
+		}
+
+		file.close();
+
+		cout << "Monsters saved." << endl;
+	}
+	else
+		cout << "Error: Could not save monsters." << endl;
+}
+
+int LoadMonstersFromFile(Monster monsters[], const string& filename)
+{
+	ifstream file(filename);
+
+	int numMonstersCreated = 0;
+
+	if (file.is_open())
+	{
+		string line;
+		while (getline(file, line) && numMonstersCreated < maxMonsterCount)
+		{
+			stringstream stream(line);
+
+			string name, temp;
+			int health, maxHealth, level, regenRate;
+
+			getline(stream, name, ',');
+			getline(stream, temp, ',');
+			health = stoi(temp);
+			getline(stream, temp, ',');
+			maxHealth = stoi(temp);
+			getline(stream, temp, ',');
+			level = stoi(temp);
+			getline(stream, temp, ',');
+			regenRate = stoi(temp);
+
+			monsters[numMonstersCreated] = { name, health, maxHealth, regenRate, level };
+			numMonstersCreated++;
+		}
+
+		file.close();
+	}
+	else
+		cout << "Error: Could not load monsters from file." << endl;
+
+	return numMonstersCreated;
+}
+
+void PrintFileToConsole(string fileName)
+{
+	ifstream file(fileName);
+
+	if (file.is_open())
+	{
+		string content;
+		char ch;
+		while (file.get(ch))
+		{
+			cout << ch;
+		}
+		file.close();
+	}
+	else
+	{
+		cout << "Error: Could not open file: '" << fileName << "'." << endl;
+	}
+}
 
 void InitMonster(Monster& monster)
 {
@@ -33,7 +113,7 @@ void InitMonster(Monster& monster)
 	cout << "Enter Monsters Regen Rate (per second): ";
 	cin >> regenRate;
 
-	cout << endl << "Monster: " << name << " has been created." << endl << "--------------------------" << endl;
+	cout << endl << "Monster: " << name << " has been initiated." << endl << "--------------------------" << endl;
 
 	monster.monsterName = name;
 	monster.monsterHealth = health;
@@ -44,6 +124,8 @@ void InitMonster(Monster& monster)
 
 void DisplayMonsters(Monster monsters[])
 {
+	cout << endl << "---- List of Monsters ----" << endl;
+
 	for (int i = 0; i < maxMonsterCount; i++)
 	{
 		if (monsters[i].monsterName != "") 
@@ -52,6 +134,7 @@ void DisplayMonsters(Monster monsters[])
 			cout << "Name: " << monsters[i].monsterName << endl;
 			cout << "Health: " << monsters[i].monsterHealth << endl;
 			cout << "Level: " << monsters[i].monsterLevel << endl;
+			cout << "Regen Rate: " << monsters[i].monsterRegenRate << endl;
 			cout << "--------------------" << endl;
 		}
 	}
@@ -59,8 +142,7 @@ void DisplayMonsters(Monster monsters[])
 
 void EditMonster(Monster monsters[])
 {
-	cout << "---- Edit a Monster ----" << endl;
-	cout << "Name of Monster: ";
+	cout << "---- Edit a Monster ----" << endl << "Name of Monster: ";
 
 	string monsterName;
 	cin >> monsterName;
@@ -76,7 +158,7 @@ void EditMonster(Monster monsters[])
 		}
 	}
 
-	if (monsterIndex != NULL)
+	if (monsterIndex >= 0 && monsterIndex <= maxMonsterCount)
 	{
 		cout << endl << "-- Current Stats --" << endl;
 		cout << "Monster: " << monsters[monsterIndex].monsterName << endl;
@@ -93,6 +175,21 @@ void DamageMonster(Monster& monster, int damage)
 	monster.monsterHealth -= damage;
 }
 
+void RegenerateMonsterHealth(time_point<steady_clock>& lastRegenTime, Monster& monster)
+{
+	int timeSinceLastRegen = duration_cast<seconds>(steady_clock::now() - lastRegenTime).count();
+
+	if (timeSinceLastRegen > 0)
+	{
+		monster.monsterHealth += (timeSinceLastRegen * monster.monsterRegenRate);
+
+		if (monster.monsterHealth > monster.monsterMaxHealth)
+			monster.monsterHealth = monster.monsterMaxHealth;
+
+		lastRegenTime += seconds(timeSinceLastRegen);
+	}
+}
+
 void FightSpecificMonster(Monster& monster)
 {
 	cout << endl << "You are fighting: " << monster.monsterName << endl;
@@ -100,25 +197,14 @@ void FightSpecificMonster(Monster& monster)
 	bool isMonsterDead = false;
 	int currentAttackCount = 0;
 
-	auto lastRegenTime = chrono::steady_clock::now();
+	time_point<steady_clock> lastRegenTime = steady_clock::now();
 
 	while (!isMonsterDead)
 	{
-		auto currentTime = chrono::steady_clock::now();
-		auto timeSinceLastRegen = chrono::duration_cast<chrono::seconds>(currentTime - lastRegenTime).count();
-		
-		if (timeSinceLastRegen > 0)
-		{
-			int regenAmount = timeSinceLastRegen * monster.monsterRegenRate;
-			monster.monsterHealth += regenAmount;
+		if (monster.monsterHealth < monster.monsterMaxHealth)
+			RegenerateMonsterHealth(lastRegenTime, monster);
 
-			if (monster.monsterHealth > monster.monsterMaxHealth)
-				monster.monsterHealth = monster.monsterMaxHealth;
-
-			lastRegenTime += chrono::seconds(timeSinceLastRegen);
-		}
-
-		cout << "Monsters Health: " << monster.monsterHealth << endl << endl;
+		cout << "Monster: " << monster.monsterName << "'s Health: " << monster.monsterHealth << endl << endl;
 		cout << "Light attack (l) or Heavy Attack (h): ";
 
 		string userInput;
@@ -151,13 +237,12 @@ void FightSpecificMonster(Monster& monster)
 	}
 
 	if (isMonsterDead)
-		cout << "You have successfully defeated " << monster.monsterName << endl;
+		cout << "You have successfully defeated Monster: " << monster.monsterName << endl;
 }
 
 void FightMonsters(Monster monsters[], int& numMonstersCreated)
 {
 	cout << "---- Fight the Monster(s) ----" << endl << endl;
-	cout << "List of Monsters to fight: " << endl;
 
 	DisplayMonsters(monsters);
 
@@ -179,12 +264,10 @@ void FightMonsters(Monster monsters[], int& numMonstersCreated)
 				monsters[i] = monsters[i + 1];
 			}
 
+			SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
+
 			if (numMonstersCreated == 0)
-			{
-				cout << endl << "-----------------------------------------------" << endl;
-				cout << "Well Done! You have successfully defeated\nall monsters and have won the game!" << endl;
-				cout << "-----------------------------------------------" << endl << endl;
-			}
+				PrintFileToConsole("AllMonstersDefeated.txt");
 			else
 			{
 				cout << "Do you want to keep fighting? (y/n): ";
@@ -209,84 +292,89 @@ void FightMonsters(Monster monsters[], int& numMonstersCreated)
 	}
 }
 
-int HandleUserOptions()
+int GetUserInput()
 {
-	cout << endl << "1 - Create a Monster" << endl;
-	cout << "2 - Edit a Monster" << endl;
-	cout << "3 - Display all Monsters" << endl;
-	cout << "4 - FIGHT!" << endl;
-	cout << "5 - Quit" << endl;
+	int userOption = -1;
 
-	cout << endl << "Option: ";
-
-	int userOption;
-	cin >> userOption;
-
-	if (userOption >= 1 && userOption <= 5)
+	while (true)
 	{
-		cout << endl;
-		return userOption;
+		PrintFileToConsole("UserMenuOptions.txt");
+
+		cin >> userOption;
+
+		if (cin.fail())
+		{
+			cout << "Error: Invalid input. Please enter a number." << endl;
+			cin.clear();
+			cin.ignore(INT_MAX, '\n');
+		}
+		else
+		{
+			break;
+		}
 	}
-	else
+
+	return userOption;
+}
+
+void HandleUserOption(int userOption, int& numMonstersCreated, Monster monsters[], bool& isGameOver)
+{
+	switch (userOption)
 	{
-		cout << "Error: Invalid Option." << endl << endl;
-		return HandleUserOptions();
+		case 1:
+			if (numMonstersCreated < maxMonsterCount)
+			{
+				cout << "---- Create a Monster ----" << endl;
+				InitMonster(monsters[numMonstersCreated]);
+				numMonstersCreated++;
+			}
+			else
+				cout << "Cannot created anymore Monsters. The maximum limmit has been reached." << endl;
+
+			break;
+		case 2:
+			if (numMonstersCreated > 0)
+				EditMonster(monsters);
+			else
+				cout << "Error: No Monsters created yet." << endl;
+			break;
+		case 3:
+			if (numMonstersCreated > 0)
+				DisplayMonsters(monsters);
+			else
+				cout << "Error: No Monsters created yet." << endl;
+
+			break;
+		case 4:
+			if (numMonstersCreated > 0)
+				FightMonsters(monsters, numMonstersCreated);
+			else
+				cout << "Error: No Monsters created yet." << endl;
+
+			break;
+		case 5:
+			isGameOver = true;
+			break;
+		default:
+			cout << "Error: Invalid Option." << endl;
+			HandleUserOption(GetUserInput(), numMonstersCreated, monsters, isGameOver);
+			break;
 	}
 }
 
 int main()
 {
-	Monster monsters[maxMonsterCount];
-
 	cout << "Welcome to Monster Creator!" << endl;
 
-	int numMonstersCreated = 0;
+	Monster monsters[maxMonsterCount];
+
+	int numMonstersCreated = LoadMonstersFromFile(monsters, "savedMonsters.txt");
 	bool isGameOver = false;
 
 	while (!isGameOver)
-	{
-		int userOption = HandleUserOptions();
+		HandleUserOption(GetUserInput(), numMonstersCreated, monsters, isGameOver);
 
-		switch (userOption)
-		{
-			case 1:
-				if (numMonstersCreated < maxMonsterCount) 
-				{
-					cout << "---- Create a Monster ----" << endl;
-					InitMonster(monsters[numMonstersCreated]);
-					numMonstersCreated++;
-				}
-				else
-					cout << "Cannot created anymore Monsters. The maximum limmit has been reached." << endl;
-
-				break;
-			case 2:
-				if (numMonstersCreated > 0)
-					EditMonster(monsters);
-				else
-					cout << "Error: No Monsters created yet." << endl;
-
-				break;
-			case 3:
-				if (numMonstersCreated > 0)
-					DisplayMonsters(monsters);
-				else
-					cout << "Error: No Monsters created yet." << endl;
-
-				break;
-			case 4:
-				if (numMonstersCreated > 0)
-					FightMonsters(monsters, numMonstersCreated);
-				else
-					cout << "Error: No Monsters created yet." << endl;
-
-				break;
-			case 5:
-				isGameOver = true;
-			default:
-				break;
-		}
-	}
+	SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
 
 	return 0;
 }

@@ -1,0 +1,10 @@
+
+---- Main Menu ----
+1 - Create a Monster
+2 - Edit a Monster
+3 - Display all Monsters
+4 - FIGHT!
+5 - Quit
+-------------------
+
+Option: 
