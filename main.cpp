@@ -1,9 +1,8 @@
 #include <iostream>
 #include <string>
-#include <chrono>
-#include <thread>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 using namespace std;
 using namespace chrono;
@@ -23,20 +22,21 @@ void SaveMonstersToFile(Monster monsters[], int numMonstersCreated, const string
 {
 	ofstream file(filename);
 
-	if (file.is_open())
+	if (!file.is_open())
 	{
-		for (int i = 0; i < numMonstersCreated; i++)
-		{
-			file << monsters[i].monsterName << "," << monsters[i].monsterHealth << "," << monsters[i].monsterMaxHealth 
-				<< "," << monsters[i].monsterLevel << "," << monsters[i].monsterRegenRate << endl;
-		}
-
-		file.close();
-
-		cout << "Monsters saved." << endl;
+		cout << "Error: Unable to save Monsters to file." << endl;
+		return;
 	}
-	else
-		cout << "Error: Could not save monsters." << endl;
+
+	for (int i = 0; i < numMonstersCreated; i++)
+	{
+		file << monsters[i].monsterName << "," << monsters[i].monsterHealth << "," << monsters[i].monsterMaxHealth
+			<< "," << monsters[i].monsterLevel << "," << monsters[i].monsterRegenRate << endl;
+	}
+
+	file.close();
+
+	cout << "Monsters saved." << endl;
 }
 
 int LoadMonstersFromFile(Monster monsters[], const string& filename)
@@ -45,34 +45,35 @@ int LoadMonstersFromFile(Monster monsters[], const string& filename)
 
 	int numMonstersCreated = 0;
 
-	if (file.is_open())
+	if (!file.is_open())
 	{
-		string line;
-		while (getline(file, line) && numMonstersCreated < maxMonsterCount)
-		{
-			stringstream stream(line);
-
-			string name, temp;
-			int health, maxHealth, level, regenRate;
-
-			getline(stream, name, ',');
-			getline(stream, temp, ',');
-			health = stoi(temp);
-			getline(stream, temp, ',');
-			maxHealth = stoi(temp);
-			getline(stream, temp, ',');
-			level = stoi(temp);
-			getline(stream, temp, ',');
-			regenRate = stoi(temp);
-
-			monsters[numMonstersCreated] = { name, health, maxHealth, regenRate, level };
-			numMonstersCreated++;
-		}
-
-		file.close();
+		cout << "Error: Unable to load Monsters from file." << endl;
+		return numMonstersCreated;
 	}
-	else
-		cout << "Error: Could not load monsters from file." << endl;
+
+	string line;
+	while (getline(file, line) && numMonstersCreated < maxMonsterCount)
+	{
+		stringstream stream(line);
+
+		string name, temp;
+		int health, maxHealth, level, regenRate;
+
+		getline(stream, name, ',');
+		getline(stream, temp, ',');
+		health = stoi(temp);
+		getline(stream, temp, ',');
+		maxHealth = stoi(temp);
+		getline(stream, temp, ',');
+		level = stoi(temp);
+		getline(stream, temp, ',');
+		regenRate = stoi(temp);
+
+		monsters[numMonstersCreated] = { name, health, maxHealth, regenRate, level };
+		numMonstersCreated++;
+	}
+
+	file.close();
 
 	return numMonstersCreated;
 }
@@ -81,20 +82,18 @@ void PrintFileToConsole(string fileName)
 {
 	ifstream file(fileName);
 
-	if (file.is_open())
+	if (!file.is_open())
+		return;
+
+	string content;
+	char ch;
+
+	while (file.get(ch))
 	{
-		string content;
-		char ch;
-		while (file.get(ch))
-		{
-			cout << ch;
-		}
-		file.close();
+		cout << ch;
 	}
-	else
-	{
-		cout << "Error: Could not open file: '" << fileName << "'." << endl;
-	}
+
+	file.close();
 }
 
 void InitMonster(Monster& monster)
@@ -232,8 +231,6 @@ void FightSpecificMonster(Monster& monster)
 
 		if (monster.monsterHealth <= 0)
 			isMonsterDead = true;
-
-		this_thread::sleep_for(chrono::milliseconds(10));
 	}
 
 	if (isMonsterDead)
@@ -252,37 +249,29 @@ void FightMonsters(Monster monsters[], int& numMonstersCreated)
 	cin >> userInput;
 	userInput--;
 
-	if (userInput <= maxMonsterCount)
+	if (userInput <= maxMonsterCount && monsters[userInput].monsterName != "")
 	{
-		if (monsters[userInput].monsterName != "")
+		FightSpecificMonster(monsters[userInput]);
+		numMonstersCreated--;
+
+		for (int i = userInput; i < maxMonsterCount - 1; i++)
 		{
-			FightSpecificMonster(monsters[userInput]);
-			numMonstersCreated--;
-
-			for (int i = userInput; i < maxMonsterCount - 1; i++)
-			{
-				monsters[i] = monsters[i + 1];
-			}
-
-			SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
-
-			if (numMonstersCreated == 0)
-				PrintFileToConsole("AllMonstersDefeated.txt");
-			else
-			{
-				cout << "Do you want to keep fighting? (y/n): ";
-
-				string input;
-				cin >> input;
-
-				if (input == "y")
-					FightMonsters(monsters, numMonstersCreated);
-			}
+			monsters[i] = monsters[i + 1];
 		}
+
+		SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
+
+		if (numMonstersCreated == 0)
+			PrintFileToConsole("AllMonstersDefeated.txt");
 		else
 		{
-			cout << "Error: That Monster does not exist." << endl << endl;
-			FightMonsters(monsters, numMonstersCreated);
+			cout << "Do you want to keep fighting? (y/n): ";
+
+			string input;
+			cin >> input;
+
+			if (input == "y")
+				FightMonsters(monsters, numMonstersCreated);
 		}
 	}
 	else
