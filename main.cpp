@@ -203,8 +203,7 @@ void FightSpecificMonster(Monster& monster)
 		if (monster.monsterHealth < monster.monsterMaxHealth)
 			RegenerateMonsterHealth(lastRegenTime, monster);
 
-		cout << "Monster: " << monster.monsterName << "'s Health: " << monster.monsterHealth << endl << endl;
-		cout << "Light attack (l) or Heavy Attack (h): ";
+		cout << "Monster: " << monster.monsterName << "'s Health: " << monster.monsterHealth << endl << endl << "Light attack (l) or Heavy Attack (h): ";
 
 		string userInput;
 		cin >> userInput;
@@ -255,9 +254,7 @@ void FightMonsters(Monster monsters[], int& numMonstersCreated)
 		numMonstersCreated--;
 
 		for (int i = userInput; i < maxMonsterCount - 1; i++)
-		{
 			monsters[i] = monsters[i + 1];
-		}
 
 		SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
 
