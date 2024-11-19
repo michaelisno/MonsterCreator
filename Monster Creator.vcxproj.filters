@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Console Outputs">
+      <UniqueIdentifier>{c825828d-cdd5-4b8c-a5aa-2f7cbc466ccc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -20,14 +23,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="UserMenuOptions.txt">
+    <Text Include="savedMonsters.txt">
       <Filter>Source Files</Filter>
     </Text>
     <Text Include="AllMonstersDefeated.txt">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Console Outputs</Filter>
     </Text>
-    <Text Include="savedMonsters.txt">
-      <Filter>Source Files</Filter>
+    <Text Include="UserMenuOptions.txt">
+      <Filter>Source Files\Console Outputs</Filter>
     </Text>
   </ItemGroup>
 </Project>

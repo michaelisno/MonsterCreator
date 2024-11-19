@@ -8,23 +8,25 @@ using namespace std;
 using namespace chrono;
 
 const int maxMonsterCount = 5;
+const float defaultPlayerDamage[] = {10, 40};
 
 struct Monster
 {
 	string monsterName = "";
+
 	int monsterHealth;
 	int monsterMaxHealth;
 	int monsterRegenRate;
 	int monsterLevel;
 };
 
-void SaveMonstersToFile(Monster monsters[], int numMonstersCreated, const string& filename)
+void SaveMonstersToFile(Monster monsters[], int numMonstersCreated)
 {
-	ofstream file(filename);
+	ofstream file("savedMonsters.txt");
 
 	if (!file.is_open())
 	{
-		cout << "Error: Unable to save Monsters to file." << endl;
+		cout << "Error: Unable to open save monsters file." << endl;
 		return;
 	}
 
@@ -36,18 +38,18 @@ void SaveMonstersToFile(Monster monsters[], int numMonstersCreated, const string
 
 	file.close();
 
-	cout << "Monsters saved." << endl;
+	cout << "Monsters saved to file." << endl;
 }
 
-int LoadMonstersFromFile(Monster monsters[], const string& filename)
+int LoadMonstersFromFile(Monster monsters[])
 {
-	ifstream file(filename);
+	ifstream file("savedMonsters.txt");
 
 	int numMonstersCreated = 0;
 
 	if (!file.is_open())
 	{
-		cout << "Error: Unable to load Monsters from file." << endl;
+		cout << "Error: Unable to open save monsters file." << endl;
 		return numMonstersCreated;
 	}
 
@@ -80,7 +82,7 @@ int LoadMonstersFromFile(Monster monsters[], const string& filename)
 
 void PrintFileToConsole(string fileName)
 {
-	ifstream file(fileName);
+	ifstream file("Console Outputs/" + fileName);
 
 	if (!file.is_open())
 		return;
@@ -96,33 +98,52 @@ void PrintFileToConsole(string fileName)
 	file.close();
 }
 
-void InitMonster(Monster& monster)
+void InitMonster(Monster& monster, int& numMonstersCreated, bool isEditingMonster = false)
 {
-	int health;
-	int level;
-	int regenRate;
-	string name;
+	if (numMonstersCreated < maxMonsterCount)
+	{
+		if (!isEditingMonster)
+		{
+			cout << "---- Create a Monster ----" << endl;
+			numMonstersCreated++;
+		}
 
-	cout << "Enter Monsters Name: ";
-	cin >> name;
-	cout << "Enter Monsters Health: ";
-	cin >> health;
-	cout << "Enter Monsters Level: ";
-	cin >> level;
-	cout << "Enter Monsters Regen Rate (per second): ";
-	cin >> regenRate;
+		int health;
+		int level;
+		int regenRate;
+		string name;
 
-	cout << endl << "Monster: " << name << " has been initiated." << endl << "--------------------------" << endl;
+		cout << "Enter Monsters Name: ";
+		cin >> name;
+		cout << "Enter Monsters Max Health: ";
+		cin >> health;
+		cout << "Enter Monsters Level: ";
+		cin >> level;
+		cout << "Enter Monsters Regen Rate (per second): ";
+		cin >> regenRate;
 
-	monster.monsterName = name;
-	monster.monsterHealth = health;
-	monster.monsterMaxHealth = health;
-	monster.monsterLevel = level;
-	monster.monsterRegenRate = regenRate;
+		cout << endl << "Monster: " << name << " has been initiated." << endl << "--------------------------" << endl;
+
+		monster.monsterName = name;
+		monster.monsterHealth = health;
+		monster.monsterMaxHealth = health;
+		monster.monsterLevel = level;
+		monster.monsterRegenRate = regenRate;
+	}
+	else
+	{
+		cout << "Cannot created anymore Monsters. The maximum limmit has been reached." << endl;
+	}
 }
 
-void DisplayMonsters(Monster monsters[])
+void DisplayMonsters(Monster monsters[], int numMonstersCreated)
 {
+	if (numMonstersCreated == 0)
+	{
+		cout << "Error: No Monsters created yet." << endl;
+		return;
+	}
+
 	cout << endl << "---- List of Monsters ----" << endl;
 
 	for (int i = 0; i < maxMonsterCount; i++)
@@ -139,8 +160,14 @@ void DisplayMonsters(Monster monsters[])
 	}
 }
 
-void EditMonster(Monster monsters[])
+void EditMonster(Monster monsters[], int& numMonstersCreated)
 {
+	if (numMonstersCreated == 0)
+	{
+		cout << "Error: No Monsters created yet." << endl;
+		return;
+	}
+
 	cout << "---- Edit a Monster ----" << endl << "Name of Monster: ";
 
 	string monsterName;
@@ -162,21 +189,26 @@ void EditMonster(Monster monsters[])
 		cout << endl << "-- Current Stats --" << endl;
 		cout << "Monster: " << monsters[monsterIndex].monsterName << endl;
 		cout << "Health: " << monsters[monsterIndex].monsterHealth << endl;
-		cout << "Level: " << monsters[monsterIndex].monsterLevel << endl << endl;
+		cout << "Level: " << monsters[monsterIndex].monsterLevel << endl;
+		cout << "Regen Rate: " << monsters[monsterIndex].monsterRegenRate << endl << endl;
 		cout << "-- New Stats -- " << endl;
 
-		InitMonster(monsters[monsterIndex]);
+		InitMonster(monsters[monsterIndex], numMonstersCreated);
 	}
 }
 
 void DamageMonster(Monster& monster, int damage)
 {
-	monster.monsterHealth -= damage;
+	int monsterLevel = monster.monsterLevel;
+
+	int damageToDeal = round(damage / monsterLevel);
+
+	monster.monsterHealth -= damageToDeal;
 }
 
 void RegenerateMonsterHealth(time_point<steady_clock>& lastRegenTime, Monster& monster)
 {
-	int timeSinceLastRegen = duration_cast<seconds>(steady_clock::now() - lastRegenTime).count();
+	int timeSinceLastRegen = static_cast<int>(duration_cast<seconds>(steady_clock::now() - lastRegenTime).count());
 
 	if (timeSinceLastRegen > 0)
 	{
@@ -192,6 +224,9 @@ void RegenerateMonsterHealth(time_point<steady_clock>& lastRegenTime, Monster& m
 void FightSpecificMonster(Monster& monster)
 {
 	cout << endl << "You are fighting: " << monster.monsterName << endl;
+	cout << "Due to " << monster.monsterName << "'s level: " << monster.monsterLevel << ", Your light attack is: " 
+		<< round(defaultPlayerDamage[0] / monster.monsterLevel) << "hp, Your heavy attack is: " 
+		<< round(defaultPlayerDamage[1] / monster.monsterLevel) << "hp." << endl;
 
 	bool isMonsterDead = false;
 	int currentAttackCount = 0;
@@ -213,21 +248,25 @@ void FightSpecificMonster(Monster& monster)
 
 		if (userInput == "l")
 		{
-			DamageMonster(monster, 10);
+			DamageMonster(monster, defaultPlayerDamage[0]);
 			currentAttackCount++;
 		}
 		else if (userInput == "h")
 		{
 			if (currentAttackCount >= 3)
 			{
-				DamageMonster(monster, 35);
+				DamageMonster(monster, defaultPlayerDamage[1]);
 				currentAttackCount = 0;
 			}
 			else
+			{
 				cout << "You can only Heavy Attack every three attacks." << endl;
+			}
 		}
 		else
+		{
 			cout << "Invalid attack option." << endl;
+		}
 
 		if (monster.monsterHealth <= 0)
 			isMonsterDead = true;
@@ -239,9 +278,16 @@ void FightSpecificMonster(Monster& monster)
 
 void FightMonsters(Monster monsters[], int& numMonstersCreated)
 {
-	cout << "---- Fight the Monster(s) ----" << endl << endl;
+	if (numMonstersCreated == 0)
+	{
+		cout << "Error: No Monsters created yet." << endl;
+		return;
+	}
 
-	DisplayMonsters(monsters);
+	cout << "---- Fight the Monster(s) ----" << endl;
+	cout << "Default light attack: 15hp. Default heavy attack: 40hp." << endl << endl;
+
+	DisplayMonsters(monsters, numMonstersCreated);
 
 	cout << endl << "Choose which Monster you want to fight first (number): ";
 
@@ -259,10 +305,12 @@ void FightMonsters(Monster monsters[], int& numMonstersCreated)
 			monsters[i] = monsters[i + 1];
 		}
 
-		SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
+		SaveMonstersToFile(monsters, numMonstersCreated);
 
 		if (numMonstersCreated == 0)
+		{
 			PrintFileToConsole("AllMonstersDefeated.txt");
+		}
 		else
 		{
 			cout << "Do you want to keep fighting? (y/n): ";
@@ -311,35 +359,16 @@ void HandleUserOption(int userOption, int& numMonstersCreated, Monster monsters[
 	switch (userOption)
 	{
 		case 1:
-			if (numMonstersCreated < maxMonsterCount)
-			{
-				cout << "---- Create a Monster ----" << endl;
-				InitMonster(monsters[numMonstersCreated]);
-				numMonstersCreated++;
-			}
-			else
-				cout << "Cannot created anymore Monsters. The maximum limmit has been reached." << endl;
-
+			InitMonster(monsters[numMonstersCreated], numMonstersCreated);
 			break;
 		case 2:
-			if (numMonstersCreated > 0)
-				EditMonster(monsters);
-			else
-				cout << "Error: No Monsters created yet." << endl;
+			EditMonster(monsters, numMonstersCreated);
 			break;
 		case 3:
-			if (numMonstersCreated > 0)
-				DisplayMonsters(monsters);
-			else
-				cout << "Error: No Monsters created yet." << endl;
-
+			DisplayMonsters(monsters, numMonstersCreated);
 			break;
 		case 4:
-			if (numMonstersCreated > 0)
-				FightMonsters(monsters, numMonstersCreated);
-			else
-				cout << "Error: No Monsters created yet." << endl;
-
+			FightMonsters(monsters, numMonstersCreated);
 			break;
 		case 5:
 			isGameOver = true;
@@ -357,13 +386,15 @@ int main()
 
 	Monster monsters[maxMonsterCount];
 
-	int numMonstersCreated = LoadMonstersFromFile(monsters, "savedMonsters.txt");
+	int numMonstersCreated = LoadMonstersFromFile(monsters);
 	bool isGameOver = false;
 
 	while (!isGameOver)
+	{
 		HandleUserOption(GetUserInput(), numMonstersCreated, monsters, isGameOver);
+	}
 
-	SaveMonstersToFile(monsters, numMonstersCreated, "savedMonsters.txt");
+	SaveMonstersToFile(monsters, numMonstersCreated);
 
 	return 0;
 }
