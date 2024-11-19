@@ -8,7 +8,7 @@ using namespace std;
 using namespace chrono;
 
 const int maxMonsterCount = 5;
-const float defaultPlayerDamage[] = {10, 40};
+const int defaultPlayerDamage[] = {10, 40};
 
 struct Monster
 {
@@ -201,7 +201,7 @@ void DamageMonster(Monster& monster, int damage)
 {
 	int monsterLevel = monster.monsterLevel;
 
-	int damageToDeal = round(damage / monsterLevel);
+	int damageToDeal = static_cast<int>(round(damage / monsterLevel));
 
 	monster.monsterHealth -= damageToDeal;
 }
