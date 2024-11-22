@@ -193,7 +193,7 @@ void EditMonster(Monster monsters[], int& numMonstersCreated)
 		cout << "Regen Rate: " << monsters[monsterIndex].monsterRegenRate << endl << endl;
 		cout << "-- New Stats -- " << endl;
 
-		InitMonster(monsters[monsterIndex], numMonstersCreated);
+		InitMonster(monsters[monsterIndex], numMonstersCreated, true);
 	}
 }
 
