@@ -15,7 +15,7 @@ int main()
 
 	FileManager fileManager;
 	fileManager.coutPath = "Console Outputs/";
-	fileManager.savePath = "Saves/";
+	fileManager.savePath = "Saves/saves.txt";
 
 	// Creation of game manager auto starts game
 	GameManager* gameManager = new GameManager(gameData, fileManager);

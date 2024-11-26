@@ -18,6 +18,9 @@ public:
 	Monster* CreateMonster();
 	void DisplayMonsters(std::vector<Monster*> monsters);
 	void EditMonsters(std::vector<Monster*>& monsters);
+	void ChooseMonsterToFight(std::vector<Monster*>& monsters);
+
+	int FightMonster(Monster*& monster);
 
 	void HandlePlayerInput(int userOption, std::vector<Monster*>& monsters, int maxMonsterCount, bool& isGameEnded);
 	int GetPlayerInput();

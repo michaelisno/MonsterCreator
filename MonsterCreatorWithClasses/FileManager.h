@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <vector>
+#include "Monster.h"
 
 class FileManager
 {
@@ -9,4 +11,6 @@ public:
 
 	void PrintFileToConsole(std::string filePath);
 
+	void SaveGame(std::vector<Monster*>& monsters);
+	void LoadGame(std::vector<Monster*>& monsters, int maxMonsterCount);
 };

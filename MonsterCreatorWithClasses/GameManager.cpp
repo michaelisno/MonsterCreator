@@ -13,7 +13,9 @@ GameManager::GameManager(GameData _gameData, FileManager _fileManager)
 
 int GameManager::GameLoop()
 {
-	vector<Monster*> monsters;
+	vector<Monster*> monsters = {};
+	fileManager.LoadGame(monsters, gameData.maxMonsterCount);
+
 	bool isGameEnded = false;
 
 	cout << "------ Monster Creator ------" << endl;
@@ -22,6 +24,8 @@ int GameManager::GameLoop()
 	{
 		HandlePlayerInput(GetPlayerInput(), monsters, gameData.maxMonsterCount, isGameEnded);
 	}
+
+	fileManager.SaveGame(monsters);
 
 	for (int i = 0; i < monsters.size(); i++)
 	{
@@ -50,7 +54,7 @@ Monster* GameManager::CreateMonster()
 	cout << "Monster's Regeneration Rate: ";
 	cin >> regenRate;
 
-	Monster* monster = new Monster(name, maxHealth, level, regenRate);
+	Monster* monster = new Monster(name, maxHealth, maxHealth, level, regenRate);
 
 	cout << endl << "'" << name << "' has been created." << endl;
 	cout << "----------------------------" << endl << endl;
@@ -88,41 +92,119 @@ void GameManager::EditMonsters(vector<Monster*>& monsters)
 	monsters[userInput - 1]->EditMonster();
 }
 
+void GameManager::ChooseMonsterToFight(vector<Monster*>& monsters)
+{
+	DisplayMonsters(monsters);
+
+	cout << "Enter Which Number to Fight (or back to go back): " << endl;
+	string userInput;
+	cin >> userInput;
+
+	if (userInput == "back")
+		return;
+
+	int option = stoi(userInput);
+
+	cout << "Option : " << option << endl;
+	cout << "MS : " << monsters.size() << endl;
+
+	if (option < 1 || option > monsters.size()) 
+	{
+		cerr << "Error: Invalid option. Please choose a number in range." << endl;
+		ChooseMonsterToFight(monsters);
+	}
+
+	int result = monsters[option - 1]->FightMonster(gameData);
+
+	if (result == 0)
+	{
+		// Monster is killed
+		cout << "Monster '" << monsters[option - 1]->GetName() << "' has been defeated!" << endl;
+		delete monsters[option - 1];
+		monsters[option - 1] = nullptr;
+		monsters.erase(monsters.begin() + option - 1);
+	}
+	else if (result == 1)
+	{
+		// Monster NOT killed; player backed out
+		cout << "You have stopped fighting '" << monsters[option - 1]->GetName() << "'." << endl;
+		cout << "Their health will be " << monsters[option - 1]->GetHealth() << " when you return." << endl;
+		return;
+	}
+	else
+	{
+		// Some error occured
+		cerr << "Error: An unkown error has occured.";
+		return;
+	}
+
+	// ONLY RUNS IF SPECIFIC MONSTER WAS KILLED
+	// Check if all monsters are killed - win game msg?
+	if (monsters.size() == 0)
+	{
+		// All mosnters defeated!
+		cout << "---------------------------------" << endl;
+		cout << "Every Monster has been defeated." << endl;
+		cout << "Well done, You have won the game!" << endl;
+		cout << "---------------------------------" << endl;
+	}
+}
+
 void GameManager::HandlePlayerInput(int userOption, vector<Monster*>& monsters, int maxMonsterCount, bool& isGameEnded)
 {
 	switch (userOption)
 	{
-	case 1:
-		if (monsters.size() >= maxMonsterCount)
-			cerr << "Error: Unable to create new monster as maximum number already created." << endl; break;
+		case 1:
+			if (monsters.size() >= maxMonsterCount) 
+			{
+				cerr << "Error: Unable to create new monster as maximum number already created." << endl;
+				break;
+			}
 
-		monsters.push_back(CreateMonster());
+			monsters.push_back(CreateMonster());
+			fileManager.SaveGame(monsters);
 
-		break;
-	case 2:
-		if (monsters.size() == 0)
-			cerr << "Error: Unable to edit monsters as non have been created yet." << endl; break;
+			break;
+		case 2:
+			if (monsters.size() == 0) 
+			{
+				cerr << "Error: Unable to edit monsters as non have been created yet." << endl; 
+				break;
+			}
 
-		EditMonsters(monsters);
+			EditMonsters(monsters);
+			fileManager.SaveGame(monsters);
 
-		break;
-	case 3:
-		if (monsters.size() == 0)
-			cerr << "Error: Unable to display monsters as non have been created yet." << endl; break;
+			break;
+		case 3:
+			if (monsters.size() == 0)
+			{
+				cerr << "Error: Unable to display monsters as non have been created yet." << endl;
+				break;
+			}
 
-		DisplayMonsters(monsters);
+			DisplayMonsters(monsters);
 
-		break;
-	case 4:
-		// Fight Monsters
-		break;
-	case 5:
-		isGameEnded = true;
-		break;
-	default:
-		cout << "Error: Invalid Option." << endl;
-		HandlePlayerInput(GetPlayerInput(), monsters, maxMonsterCount, isGameEnded);
-		break;
+			break;
+		case 4:
+			// Fight Monsters
+			if (monsters.size() == 0) 
+			{
+				cerr << "Error: Unable to fight monsters as non have been created yet." << endl;
+				break;
+			}
+
+			ChooseMonsterToFight(monsters);
+			fileManager.SaveGame(monsters);
+
+			break;
+		case 5:
+			isGameEnded = true;
+			break;
+		default:
+			cout << "Error: Invalid Option." << endl;
+			HandlePlayerInput(GetPlayerInput(), monsters, maxMonsterCount, isGameEnded);
+			break;
 	}
 }
 
