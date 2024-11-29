@@ -6,7 +6,8 @@
 struct GameData
 {
 	int maxMonsterCount;
-	std::array<int, 2> playerDamage = {};
+	int playerLightDamage;
+	int playerHeavyDamage;
 	int heavyAttackCount;
 };
 

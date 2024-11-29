@@ -41,6 +41,9 @@
     <Text Include="saves.txt">
       <Filter>Source Files\Saves</Filter>
     </Text>
+    <Text Include="won_game.txt">
+      <Filter>Source Files\Console Outputs</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileManager.h">

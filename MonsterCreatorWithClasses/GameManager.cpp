@@ -13,12 +13,12 @@ GameManager::GameManager(GameData _gameData, FileManager _fileManager)
 
 int GameManager::GameLoop()
 {
+	cout << "------ Monster Creator ------" << endl;
+
 	vector<Monster*> monsters = {};
 	fileManager.LoadGame(monsters, gameData.maxMonsterCount);
 
 	bool isGameEnded = false;
-
-	cout << "------ Monster Creator ------" << endl;
 
 	while (!isGameEnded)
 	{
@@ -118,7 +118,6 @@ void GameManager::ChooseMonsterToFight(vector<Monster*>& monsters)
 
 	if (result == 0)
 	{
-		// Monster is killed
 		cout << "Monster '" << monsters[option - 1]->GetName() << "' has been defeated!" << endl;
 		delete monsters[option - 1];
 		monsters[option - 1] = nullptr;
@@ -126,28 +125,18 @@ void GameManager::ChooseMonsterToFight(vector<Monster*>& monsters)
 	}
 	else if (result == 1)
 	{
-		// Monster NOT killed; player backed out
 		cout << "You have stopped fighting '" << monsters[option - 1]->GetName() << "'." << endl;
 		cout << "Their health will be " << monsters[option - 1]->GetHealth() << " when you return." << endl;
 		return;
 	}
 	else
 	{
-		// Some error occured
 		cerr << "Error: An unkown error has occured.";
 		return;
 	}
 
-	// ONLY RUNS IF SPECIFIC MONSTER WAS KILLED
-	// Check if all monsters are killed - win game msg?
 	if (monsters.size() == 0)
-	{
-		// All mosnters defeated!
-		cout << "---------------------------------" << endl;
-		cout << "Every Monster has been defeated." << endl;
-		cout << "Well done, You have won the game!" << endl;
-		cout << "---------------------------------" << endl;
-	}
+		fileManager.PrintFileToConsole("won_game.txt");
 }
 
 void GameManager::HandlePlayerInput(int userOption, vector<Monster*>& monsters, int maxMonsterCount, bool& isGameEnded)
@@ -168,7 +157,7 @@ void GameManager::HandlePlayerInput(int userOption, vector<Monster*>& monsters, 
 		case 2:
 			if (monsters.size() == 0) 
 			{
-				cerr << "Error: Unable to edit monsters as non have been created yet." << endl; 
+				cerr << "Error: Unable to edit monsters as none have been created yet." << endl; 
 				break;
 			}
 
@@ -179,7 +168,7 @@ void GameManager::HandlePlayerInput(int userOption, vector<Monster*>& monsters, 
 		case 3:
 			if (monsters.size() == 0)
 			{
-				cerr << "Error: Unable to display monsters as non have been created yet." << endl;
+				cerr << "Error: Unable to display monsters as none have been created yet." << endl;
 				break;
 			}
 
@@ -187,10 +176,9 @@ void GameManager::HandlePlayerInput(int userOption, vector<Monster*>& monsters, 
 
 			break;
 		case 4:
-			// Fight Monsters
 			if (monsters.size() == 0) 
 			{
-				cerr << "Error: Unable to fight monsters as non have been created yet." << endl;
+				cerr << "Error: Unable to fight monsters as none have been created yet." << endl;
 				break;
 			}
 

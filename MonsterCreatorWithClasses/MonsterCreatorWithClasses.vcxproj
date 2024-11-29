@@ -27,6 +27,7 @@
   <ItemGroup>
     <Text Include="Console Outputs\menu.txt" />
     <Text Include="saves.txt" />
+    <Text Include="won_game.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileManager.h" />
